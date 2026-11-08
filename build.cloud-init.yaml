@@ -1,26 +1,19 @@
 #!/bin/bash
 set -e
 
-# Устанавливаем пакеты
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y openjdk-17-jdk maven git awscli
 
-# Переходим в домашнюю директорию ubuntu
 cd /home/ubuntu
 
-# Клонируем и собираем
 git clone https://github.com/EsekhAn/docker_compose.git app
 cd app
 mvn clean package -DskipTests
 
-# Находим WAR и загружаем в бакет
 WAR=$(find target -name "*.war" | head -1)
 echo "WAR found: $WAR"
 
-# Важно: awscli должен использовать сервисный аккаунт, привязанный к ВМ.
-# Если ключи не подхватываются, возможно, потребуется настроить их явно.
 aws --endpoint-url=https://storage.yandexcloud.net s3 cp "$WAR" s3://java-build-artifacts/hello.war
 
-# Отмечаем успех
 echo "BUILD COMPLETE" > /tmp/build.status

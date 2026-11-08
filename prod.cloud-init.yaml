@@ -5,7 +5,6 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y openjdk-17-jdk tomcat9 awscli
 
-# Ждём появления WAR в бакете
 BUCKET="java-build-artifacts"
 for i in $(seq 1 30); do
     if aws --endpoint-url=https://storage.yandexcloud.net s3 cp "s3://$BUCKET/hello.war" /tmp/hello.war; then
@@ -21,7 +20,6 @@ if [ ! -f /tmp/hello.war ]; then
     exit 1
 fi
 
-# Развёртываем в Tomcat
 cp /tmp/hello.war /var/lib/tomcat9/webapps/hello.war
 systemctl restart tomcat9
 systemctl enable tomcat9
