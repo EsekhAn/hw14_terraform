@@ -1,4 +1,7 @@
 #cloud-config
+datasource:
+  Ec2:
+    strict_id: false
 package_update: true
 packages:
   - openjdk-17-jdk
@@ -6,30 +9,4 @@ packages:
   - awscli
 
 runcmd:
-  - |
-    cat > /home/ubuntu/prod.sh <<'SCRIPT'
-    #!/bin/bash
-    set -e
-    BUCKET="java-build-artifacts"
-    cd /home/ubuntu
-    for i in $(seq 1 30); do
-      if aws --endpoint-url=https://storage.yandexcloud.net \
-             s3 cp "s3://$BUCKET/hello.war" /tmp/hello.war; then
-        echo "WAR downloaded"
-        break
-      fi
-      echo "Waiting for WAR... attempt $i"
-      sleep 20
-    done
-    if [ ! -f /tmp/hello.war ]; then
-      echo "ERROR: WAR not found in bucket" >&2
-      exit 1
-    fi
-    sudo cp /tmp/hello.war /var/lib/tomcat9/webapps/hello.war
-    sudo systemctl restart tomcat9
-    sudo systemctl enable tomcat9
-    echo "PROD DEPLOY COMPLETE" > /tmp/prod.status
-    SCRIPT
-  - chown ubuntu:ubuntu /home/ubuntu/prod.sh
-  - chmod +x /home/ubuntu/prod.sh
-  - sudo -u ubuntu bash /home/ubuntu/prod.sh
+  - sudo -u ubuntu bash -c 'BUCKET="java-build-artifacts"; cd /home/ubuntu; for i in $(seq 1 30); do if aws --endpoint-url=https://storage.yandexcloud.net s3 cp "s3://$BUCKET/hello.war" /tmp/hello.war; then echo "WAR downloaded"; break; fi; echo "Waiting for WAR... attempt $i"; sleep 20; done; if [ ! -f /tmp/hello.war ]; then echo "ERROR: WAR not found" >&2; exit 1; fi; sudo cp /tmp/hello.war /var/lib/tomcat9/webapps/hello.war; sudo systemctl restart tomcat9; sudo systemctl enable tomcat9; echo "PROD DEPLOY COMPLETE" > /tmp/prod.status'
