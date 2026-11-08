@@ -13,10 +13,10 @@ write_files:
       #!/bin/bash
       set -e
 
-      BUCKET="${bucket}"
+      BUCKET="java-build-artifacts"
 
       cd /home/ubuntu
-      for i in {1..30}; do
+      for i in $(seq 1 30); do
         if aws --endpoint-url=https://storage.yandexcloud.net \
                s3 cp "s3://$BUCKET/hello.war" /tmp/hello.war; then
           echo "WAR downloaded"
@@ -32,11 +32,10 @@ write_files:
       fi
 
       sudo cp /tmp/hello.war /var/lib/tomcat9/webapps/hello.war
-
       sudo systemctl restart tomcat9
       sudo systemctl enable tomcat9
 
       echo "PROD DEPLOY COMPLETE" > /tmp/prod.status
 
 runcmd:
-  - su - ubuntu -c 'bash /home/ubuntu/prod.sh'
+  - sudo -u ubuntu bash /home/ubuntu/prod.sh

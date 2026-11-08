@@ -15,7 +15,7 @@ write_files:
       set -e
 
       REPO_URL="https://github.com/EsekhAn/docker_compose.git"
-      BUCKET="${bucket}"
+      BUCKET="java-build-artifacts"
 
       cd /home/ubuntu
       git clone "$REPO_URL" app
@@ -32,4 +32,4 @@ write_files:
       echo "BUILD COMPLETE" > /tmp/build.status
 
 runcmd:
-  - su - ubuntu -c 'bash /home/ubuntu/build.sh'
+  - sudo -u ubuntu bash /home/ubuntu/build.sh
