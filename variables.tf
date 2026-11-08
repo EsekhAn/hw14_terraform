@@ -34,12 +34,6 @@ variable "ssh_key_path" {
   default     = "~/.ssh/id_rsa.pub"
 }
 
-variable "bucket_name" {
-  description = "Имя бакета Object Storage для артефактов"
-  type        = string
-  default     = "java-build-artifacts"
-}
-
 variable "service_account_id" {
   description = "ID сервисного аккаунта с ролью storage.editor для доступа к бакету"
   type        = string
