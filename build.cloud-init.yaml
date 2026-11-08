@@ -6,30 +6,23 @@ packages:
   - git
   - awscli
 
-write_files:
-  - path: /home/ubuntu/build.sh
-    owner: ubuntu:ubuntu
-    permissions: '0755'
-    content: |
-      #!/bin/bash
-      set -e
-
-      REPO_URL="https://github.com/EsekhAn/docker_compose.git"
-      BUCKET="java-build-artifacts"
-
-      cd /home/ubuntu
-      git clone "$REPO_URL" app
-      cd app
-
-      mvn clean package -DskipTests
-
-      WAR=$(find target -name "*.war" | head -1)
-      echo "WAR found: $WAR"
-
-      aws --endpoint-url=https://storage.yandexcloud.net \
-          s3 cp "$WAR" "s3://$BUCKET/hello.war"
-
-      echo "BUILD COMPLETE" > /tmp/build.status
-
 runcmd:
+  - |
+    cat > /home/ubuntu/build.sh <<'SCRIPT'
+    #!/bin/bash
+    set -e
+    REPO_URL="https://github.com/EsekhAn/docker_compose.git"
+    BUCKET="java-build-artifacts"
+    cd /home/ubuntu
+    git clone "$REPO_URL" app
+    cd app
+    mvn clean package -DskipTests
+    WAR=$(find target -name "*.war" | head -1)
+    echo "WAR found: $WAR"
+    aws --endpoint-url=https://storage.yandexcloud.net \
+        s3 cp "$WAR" "s3://$BUCKET/hello.war"
+    echo "BUILD COMPLETE" > /tmp/build.status
+    SCRIPT
+  - chown ubuntu:ubuntu /home/ubuntu/build.sh
+  - chmod +x /home/ubuntu/build.sh
   - sudo -u ubuntu bash /home/ubuntu/build.sh
