@@ -3,9 +3,9 @@ variable "zone" {
   default     = "ru-central1-d"
 }
 
-variable "folder_id" {
-  description = "ID каталога Yandex Cloud"
-  default     = "b1gblakel3omsk92oj0q"
+variable "vm_name" {
+  description = "Префикс имени виртуальных машин"
+  default     = "my-custom-vm"
 }
 
 variable "vm_cores" {
@@ -34,7 +34,13 @@ variable "ssh_key_path" {
   default     = "~/.ssh/id_rsa.pub"
 }
 
-variable "registry_name" {
-  description = "Имя Container Registry"
-  default     = "java-app-registry"
+variable "bucket_name" {
+  description = "Имя бакета Object Storage для артефактов"
+  type        = string
+  default     = "java-build-artifacts"
+}
+
+variable "service_account_id" {
+  description = "ID сервисного аккаунта с ролью storage.editor для доступа к бакету"
+  type        = string
 }
