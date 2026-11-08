@@ -8,49 +8,18 @@ terraform {
 
 provider "yandex" {
   zone      = var.zone
-  folder_id = var.folder_id
+  folder_id = "b1gblakel3omsk92oj0q"
 }
 
 data "yandex_compute_image" "ubuntu" {
   family = "ubuntu-2204-lts"
 }
 
-resource "yandex_container_registry" "app" {
-  name      = var.registry_name
-  folder_id = var.folder_id
-}
-
-resource "yandex_iam_service_account" "builder_sa" {
-  name      = "builder-sa"
-  folder_id = var.folder_id
-}
-
-resource "yandex_iam_service_account" "prod_sa" {
-  name      = "prod-sa"
-  folder_id = var.folder_id
-}
-
-resource "yandex_resourcemanager_folder_iam_member" "builder_push" {
-  folder_id = var.folder_id
-  role      = "container-registry.images.pusher"
-  member    = "serviceAccount:${yandex_iam_service_account.builder_sa.id}"
-}
-
-resource "yandex_resourcemanager_folder_iam_member" "builder_pull" {
-  folder_id = var.folder_id
-  role      = "container-registry.images.puller"
-  member    = "serviceAccount:${yandex_iam_service_account.builder_sa.id}"
-}
-
-resource "yandex_resourcemanager_folder_iam_member" "prod_pull" {
-  folder_id = var.folder_id
-  role      = "container-registry.images.puller"
-  member    = "serviceAccount:${yandex_iam_service_account.prod_sa.id}"
-}
-
-resource "yandex_compute_instance" "builder" {
-  name        = "builder-vm"
-  platform_id = "standard-v3"
+# ---------- СБОРОЧНЫЙ ИНСТАНС ----------
+resource "yandex_compute_instance" "build" {
+  name               = "${var.vm_name}-build"
+  platform_id        = "standard-v3"
+  service_account_id = var.service_account_id
 
   resources {
     cores  = var.vm_cores
@@ -72,25 +41,17 @@ resource "yandex_compute_instance" "builder" {
 
   metadata = {
     ssh-keys = "ubuntu:${file(pathexpand(var.ssh_key_path))}"
-    user-data = <<-EOF
-      #cloud-config
-      package_update: true
-      packages:
-        - docker.io
-        - git
-        - maven
-      runcmd:
-        - systemctl enable --now docker
-        - usermod -aG docker ubuntu
-    EOF
+    user-data = templatefile("${path.module}/build.cloud-init.yaml", {
+      bucket = var.bucket_name
+    })
   }
-
-  service_account_id = yandex_iam_service_account.builder_sa.id
 }
 
+# ---------- ПРОДОВЫЙ ИНСТАНС ----------
 resource "yandex_compute_instance" "prod" {
-  name        = "prod-vm"
-  platform_id = "standard-v3"
+  name               = "${var.vm_name}-prod"
+  platform_id        = "standard-v3"
+  service_account_id = var.service_account_id
 
   resources {
     cores  = var.vm_cores
@@ -112,16 +73,10 @@ resource "yandex_compute_instance" "prod" {
 
   metadata = {
     ssh-keys = "ubuntu:${file(pathexpand(var.ssh_key_path))}"
-    user-data = <<-EOF
-      #cloud-config
-      package_update: true
-      packages:
-        - docker.io
-      runcmd:
-        - systemctl enable --now docker
-        - usermod -aG docker ubuntu
-    EOF
+    user-data = templatefile("${path.module}/prod.cloud-init.yaml", {
+      bucket = var.bucket_name
+    })
   }
 
-  service_account_id = yandex_iam_service_account.prod_sa.id
+  depends_on = [yandex_compute_instance.build]
 }
