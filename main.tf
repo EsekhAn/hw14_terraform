@@ -14,6 +14,7 @@ provider "yandex" {
 data "yandex_compute_image" "ubuntu" {
   family = "ubuntu-2204-lts"
 }
+
 resource "yandex_compute_instance" "build" {
   name               = "${var.vm_name}-build"
   platform_id        = "standard-v3"
@@ -38,10 +39,8 @@ resource "yandex_compute_instance" "build" {
   }
 
   metadata = {
-    ssh-keys = "ubuntu:${file(pathexpand(var.ssh_key_path))}"
-    user-data = templatefile("${path.module}/build.cloud-init.yaml", {
-      bucket = var.bucket_name
-    })
+    ssh-keys  = "ubuntu:${file(pathexpand(var.ssh_key_path))}"
+    user-data = file("${path.module}/build.cloud-init.yaml")
   }
 }
 
@@ -69,10 +68,8 @@ resource "yandex_compute_instance" "prod" {
   }
 
   metadata = {
-    ssh-keys = "ubuntu:${file(pathexpand(var.ssh_key_path))}"
-    user-data = templatefile("${path.module}/prod.cloud-init.yaml", {
-      bucket = var.bucket_name
-    })
+    ssh-keys  = "ubuntu:${file(pathexpand(var.ssh_key_path))}"
+    user-data = file("${path.module}/prod.cloud-init.yaml")
   }
 
   depends_on = [yandex_compute_instance.build]
