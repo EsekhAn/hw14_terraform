@@ -14,8 +14,6 @@ provider "yandex" {
 data "yandex_compute_image" "ubuntu" {
   family = "ubuntu-2204-lts"
 }
-
-# ---------- СБОРОЧНЫЙ ИНСТАНС ----------
 resource "yandex_compute_instance" "build" {
   name               = "${var.vm_name}-build"
   platform_id        = "standard-v3"
@@ -47,7 +45,6 @@ resource "yandex_compute_instance" "build" {
   }
 }
 
-# ---------- ПРОДОВЫЙ ИНСТАНС ----------
 resource "yandex_compute_instance" "prod" {
   name               = "${var.vm_name}-prod"
   platform_id        = "standard-v3"
